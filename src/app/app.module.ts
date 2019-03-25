@@ -1,23 +1,32 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
-import {ToolbarModule} from 'primeng/toolbar';
-import {ButtonModule} from 'primeng/button';
-import { AppComponent } from './app.component';
-import { AppFooterComponent } from './app-footer/app-footer.component';
-import { MapComponent } from './map/map.component';
+import { AppComponent } from './components/app/app.component';
+import {MatButtonModule, MatToolbarModule} from '@angular/material';
+import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
+import {LayoutComponent} from './components/layout/layout.component';
+import {AppRoutingModule} from './app.routing';
+import {HashLocationStrategy, LocationStrategy} from '@angular/common';
+import {FormsModule} from '@angular/forms';
+
 
 @NgModule({
   declarations: [
     AppComponent,
-    AppFooterComponent,
-    MapComponent
+    LayoutComponent
   ],
   imports: [
     BrowserModule,
-    ToolbarModule,
-    ButtonModule
+    BrowserAnimationsModule,
+    FormsModule,
+    AppRoutingModule,
+    MatToolbarModule
   ],
-  providers: [],
+  providers: [
+    {
+      provide: LocationStrategy,
+      useClass: HashLocationStrategy
+    }
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
