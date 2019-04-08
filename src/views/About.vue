@@ -17,7 +17,9 @@
         </md-button>
       </md-speed-dial-content>
     </md-speed-dial>
+    <div id="fullscreen" class="fullscreen">
     <div id="map" class="map"></div>
+    </div>
     <md-dialog :md-active.sync="showDialog">
       <md-dialog-title>Фильтр</md-dialog-title>
       <md-dialog-content>
@@ -37,6 +39,7 @@
         <md-button class="md-primary" @click="filter">Отфильтровать</md-button>
       </md-dialog-actions>
     </md-dialog>
+    <div id="popup" title="Welcome to OpenLayers"></div>
   </div>
 </template>
 <script>
@@ -50,10 +53,17 @@
   import TileWMS from 'ol/source/TileWMS'
   import {Circle as CircleStyle, Fill, Stroke, Style} from 'ol/style';
   import {Draw, Modify, Snap} from 'ol/interaction';
-  import {defaults as defaultControls, ScaleLine} from 'ol/control';
+  import {defaults as defaultControls, ScaleLine, FullScreen, OverviewMap} from 'ol/control';
+  import Overlay from 'ol/Overlay';
+  import {toStringHDMS} from 'ol/coordinate.js';
+  import {fromLonLat, toLonLat} from 'ol/proj.js';
+
 
   let scaleLineControl = new ScaleLine();
   scaleLineControl.setUnits('metric');
+  let fullScreenControl = new FullScreen({
+  });
+
 
   const singleClick = new Select();
   var source = new VectorSource();
@@ -107,7 +117,14 @@
       });
       this.snap = new Snap({source: source});
       this.map.removeInteraction(this.draw);
-      // this.map.removeInteraction(this.snap);
+      // this.map.on('click', function(evt) {
+      //   // var element = popup.getElement();
+      //   let coordinate = evt.coordinate;
+      //   let hdms = toStringHDMS(toLonLat(coordinate));
+      //   console.log(coordinate)
+      //   console.log(hdms)
+      // });
+
     },
     created: function () {
     },
@@ -182,7 +199,8 @@
       createMap: function () {
         this.map = new Map({
           controls: defaultControls().extend([
-            scaleLineControl
+            scaleLineControl,
+            // fullScreenControl,
           ]),
           target: 'map',
           layers: [
@@ -199,6 +217,10 @@
             zoom: 12
           })
         });
+        let popup = new Overlay({
+          element: document.getElementById('popup')
+        });
+        this.map.addOverlay(popup);
         this.map.addInteraction(singleClick);
         singleClick.on('select', function (e) {
           console.log(e)
@@ -249,5 +271,56 @@
     top: 15vh;
     bottom: 0;
     right: 2vw;
+  }
+  .fullscreen:-moz-full-screen {
+    height: 100vh;
+  }
+  .fullscreen:-webkit-full-screen {
+    height: 100vh;
+  }
+  .fullscreen:-ms-fullscreen {
+    height: 100vh;
+  }
+
+  .fullscreen:fullscreen {
+    height: 100%;
+  }
+
+  .fullscreen {
+    margin-bottom: 10px;
+    width: 100%;
+    height: 400px;
+  }
+  .ol-custom-overviewmap,
+  .ol-custom-overviewmap.ol-uncollapsible {
+    bottom: auto;
+    left: auto;
+    right: 0;
+    top: 0;
+  }
+
+  .ol-custom-overviewmap:not(.ol-collapsed)  {
+    border: 1px solid black;
+  }
+
+  .ol-custom-overviewmap .ol-overviewmap-map {
+    border: none;
+    width: 300px;
+  }
+
+  .ol-custom-overviewmap .ol-overviewmap-box {
+    border: 2px solid red;
+  }
+
+  .ol-custom-overviewmap:not(.ol-collapsed) button{
+    bottom: auto;
+    left: auto;
+    right: 1px;
+    top: 1px;
+  }
+
+  .ol-rotate {
+    top: 170px;
+    right: 0;
   }
 </style>
