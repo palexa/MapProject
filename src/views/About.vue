@@ -1,102 +1,237 @@
 <template>
-  <div id="map" class="map"></div>
+  <div>
+    <md-speed-dial class="actions" md-direction="bottom">
+      <md-speed-dial-target class="md-primary">
+        <!--        <md-icon>my_location</md-icon>-->
+        <md-icon class="md-morph-initial">edit</md-icon>
+        <md-icon class="md-morph-final">close</md-icon>
+      </md-speed-dial-target>
+
+      <md-speed-dial-content>
+        <md-button class="md-icon-button" v-on:click="changePointer">
+          <md-icon v-show="pointsAdding">games</md-icon>
+          <md-icon v-show="!pointsAdding">control_point</md-icon>
+        </md-button>
+        <md-button class="md-icon-button" @click="showDialog = true">
+          <md-icon>filter_list</md-icon>
+        </md-button>
+      </md-speed-dial-content>
+    </md-speed-dial>
+    <div id="map" class="map"></div>
+    <md-dialog :md-active.sync="showDialog">
+      <md-dialog-title>Фильтр</md-dialog-title>
+      <md-dialog-content>
+        <md-field>
+          <label for="movies">Movies</label>
+          <md-select v-model="layersIds" name="movies" id="movies" multiple>
+            <md-option value="0">Layer1</md-option>
+            <md-option value="1">Layer2</md-option>
+            <md-option value="2">Layer3</md-option>
+            <md-option value="3">Layer4</md-option>
+            <md-option value="4">Layer5</md-option>
+          </md-select>
+        </md-field>
+      </md-dialog-content>
+      <md-dialog-actions>
+        <md-button class="md-primary" @click="showDialog = false">Close</md-button>
+        <md-button class="md-primary" @click="filter">Отфильтровать</md-button>
+      </md-dialog-actions>
+    </md-dialog>
+  </div>
 </template>
 <script>
   import {Map, View} from 'ol';
   import TileLayer from 'ol/layer/Tile';
   import VectorLayer from 'ol/layer/Vector';
   import XYZ from 'ol/source/XYZ';
-  import TileWMS from 'ol/source/TileWMS'
   import GeoJSON from 'ol/format/GeoJSON';
   import VectorSource from 'ol/source/Vector.js';
-  import Projection from 'ol/proj/Projection'
+  import Select from 'ol/interaction/Select';
+  import TileWMS from 'ol/source/TileWMS'
+  import {Circle as CircleStyle, Fill, Stroke, Style} from 'ol/style';
+  import {Draw, Modify, Snap} from 'ol/interaction';
+  import {defaults as defaultControls, ScaleLine} from 'ol/control';
+
+  let scaleLineControl = new ScaleLine();
+  scaleLineControl.setUnits('metric');
+
+  const singleClick = new Select();
+  var source = new VectorSource();
+  var modify = new Modify({source: source});
+
+  var vector = new VectorLayer({
+    source: source,
+    style: new Style({
+      fill: new Fill({
+        color: 'rgba(255, 255, 255, 0.2)'
+      }),
+      stroke: new Stroke({
+        color: '#ffcc33',
+        width: 2
+      }),
+      image: new CircleStyle({
+        radius: 7,
+        fill: new Fill({
+          color: '#ffcc33'
+        })
+      })
+    })
+  });
+
 
   export default {
     name: 'about',
+    data: function () {
+      return {
+        pointsAdding: false,
+        showDialog: false,
+        layersIds: []
+      }
+    },
+    date: {
+      map: null,
+      layers: null,
+      draw: null,
+      snap: null,
+    },
     props: {
       msg: String,
     },
     mounted: function () {
-      const map = new Map({
-        target: 'map',
-        layers: [
-          new TileLayer({
-            source: new XYZ({
-              url: `https://{1-4}.aerial.maps.cit.api.here.com/maptile/2.1/maptile/newest/satellite.day/{z}/{x}/{y}/256/png?app_id=bC3EwJd5PpBZQksByia9&app_code=ZgXJboW6NT-PllF8etor9g`
-            })
-          }),
-          // new TileLayer ({
-          //   // extent: [479792.580417208,5919986.873842877,538430.5024032703,5953276.110803715],
-          //   source: new TileWMS(
-          //     ({
-          //       url: 'http://192.168.100.4:8080/geoserver/main/wms',
-          //       params: {
-          //         'LAYERS': 'main:Kvartal_WGS84N35',
-          //         'TILED': true,
-          //       },
-          //       title: 'SPA'
-          //     })
-          //   ),
-          // }),
-          // new VectorLayer({
-          //   source: new VectorSource({
-          //     url: 'http://192.168.100.4:8080/geoserver/main/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=main:Kvartal_WGS84N35&maxFeatures=10000&outputFormat=application%2Fjson',
-          //     format: new GeoJSON(),
-          //     projection : 'EPSG:3856'
-          //   })
-          // }),
-          // new TileLayer ({
-          //   // extent: [479792.580417208,5919986.873842877,538430.5024032703,5953276.110803715],
-          //   source: new TileWMS(
-          //     ({
-          //       url: 'http://192.168.100.4:8080/geoserver/main/wms',
-          //       params: {
-          //         'LAYERS': 'main:Vydel_WGS84N35',
-          //         'TILED': true,
-          //       },
-          //       title: 'SPA'
-          //     })
-          //   ),
-          // }),
-          // new TileLayer ({
-          //   source: new TileWMS(
-          //           ({
-          //             url: 'http://192.168.100.4:8080/geoserver/main/wms',
-          //             params: {
-          //               'LAYERS': 'main:Gidrografija_WGS84N35',
-          //               'TILED': true,
-          //             },
-          //             title: 'SPA'
-          //           })
-          //   ),
-          // }),
-          // new TileLayer ({
-          //   source: new TileWMS(
-          //           ({
-          //             url: 'http://192.168.100.4:8080/geoserver/main/wms',
-          //             params: {
-          //               'LAYERS': 'main:Line_WGS84N35',
-          //               'TILED': true,
-          //             },
-          //             title: 'SPA'
-          //           })
-          //   ),
-          // }),
+      this.initLayers();
+      this.createMap();
+      this.map.addInteraction(modify);
+      this.draw = new Draw({
+        source: source,
+        type: 'Point'
+      });
+      this.snap = new Snap({source: source});
+      this.map.removeInteraction(this.draw);
+      // this.map.removeInteraction(this.snap);
+    },
+    created: function () {
+    },
+    methods: {
+      initLayers: function () {
+        this.layers = [];
+        this.layers.push(
           new VectorLayer({
             source: new VectorSource({
               format: new GeoJSON(),
-              url: 'http://localhost:8080/geoserver/main/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=main:Kvartal_WGS84N35&srsName=EPSG:3857&maxFeatures=1000&outputFormat=application%2Fjson',
+              url: 'http://192.168.100.4:8080/geoserver/main/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=main:Kvartal_WGS84N35&srsName=EPSG:3857&maxFeatures=1000&outputFormat=application%2Fjson',
             })
+          }),
+        );
+        this.layers.push(
+          new TileLayer({
+            source: new TileWMS(
+              ({
+                url: 'http://192.168.100.4:8080/geoserver/main/wms',
+                params: {
+                  'LAYERS': 'main:Kvartal_WGS84N35',
+                  'TILED': true,
+                },
+                title: 'SPA'
+              })
+            ),
           })
-        ],
-        view: new View({
-          // projection:
-          center: [3016281,7089075],
-          minZoom:11,
-          zoom: 12
-        })
-      });
-      // map.addLayer(vector);
+        );
+        this.layers.push(
+          new TileLayer({
+            source: new TileWMS(
+              ({
+                url: 'http://192.168.100.4:8080/geoserver/main/wms',
+                params: {
+                  'LAYERS': 'main:Vydel_WGS84N35',
+                  'TILED': true,
+                },
+                title: 'SPA'
+              })
+            ),
+          }),
+        );
+        this.layers.push(
+          new TileLayer({
+            source: new TileWMS(
+              ({
+                url: 'http://192.168.100.4:8080/geoserver/main/wms',
+                params: {
+                  'LAYERS': 'main:Gidrografija_WGS84N35',
+                  'TILED': true,
+                },
+                title: 'SPA'
+              })
+            ),
+          }),
+        );
+        this.layers.push(
+          new TileLayer({
+            source: new TileWMS(
+              ({
+                url: 'http://192.168.100.4:8080/geoserver/main/wms',
+                params: {
+                  'LAYERS': 'main:Line_WGS84N35',
+                  'TILED': true,
+                },
+                title: 'SPA'
+              })
+            ),
+          }),
+        );
+      },
+      createMap: function () {
+        this.map = new Map({
+          controls: defaultControls().extend([
+            scaleLineControl
+          ]),
+          target: 'map',
+          layers: [
+            new TileLayer({
+              source: new XYZ({
+                url: `https://{1-4}.aerial.maps.cit.api.here.com/maptile/2.1/maptile/newest/satellite.day/{z}/{x}/{y}/256/png?app_id=bC3EwJd5PpBZQksByia9&app_code=ZgXJboW6NT-PllF8etor9g`
+              })
+            }),
+            vector
+          ],
+          view: new View({
+            center: [3016281, 7089075],
+            minZoom: 11,
+            zoom: 12
+          })
+        });
+        this.map.addInteraction(singleClick);
+        singleClick.on('select', function (e) {
+          console.log(e)
+        });
+      },
+      addDrawInteraction: function () {
+        this.map.addInteraction(this.draw);
+        // this.map.addInteraction(this.snap);
+      },
+      removeDrawInteraction: function () {
+        this.map.removeInteraction(this.draw);
+        // this.map.removeInteraction(this.snap);
+      },
+      filter() {
+        let allIds = this.layers.map(function (currentValue, index) {
+          return `${index}`
+        });
+        allIds.forEach(id=>{
+          this.map.removeLayer(this.layers[id])
+        });
+        this.layersIds.forEach(id => {
+          this.map.addLayer(this.layers[id]);
+        });
+        this.showDialog = false;
+      },
+      changePointer() {
+        if (this.pointsAdding) {
+          this.removeDrawInteraction();
+        } else {
+          this.addDrawInteraction();
+        }
+        this.pointsAdding = !this.pointsAdding;
+      }
     }
   };
 </script>
@@ -107,5 +242,12 @@
     bottom: 0;
     left: 0;
     right: 0;
+  }
+
+  .actions {
+    position: absolute;
+    top: 15vh;
+    bottom: 0;
+    right: 2vw;
   }
 </style>

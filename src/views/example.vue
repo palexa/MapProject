@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div id="map" class="map"></div>
+        <div id="map"></div>
     </div>
 </template>
 
@@ -25,7 +25,7 @@
                 var vector2 = new VectorLayer({
                     source: new VectorSource({
                         format: new GeoJSON(),
-                        url: 'http://localhost:8080/geoserver/main/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=main:Kvartal_WGS84N35&srsName=EPSG:3857&maxFeatures=1000&outputFormat=application%2Fjson',
+                        url: 'http://192.168.100.4:8080/geoserver/main/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=main:Kvartal_WGS84N35&srsName=EPSG:3857&maxFeatures=1000&outputFormat=application%2Fjson',
                     })
                 });
 
@@ -44,7 +44,7 @@
 
             var vector = new VectorLayer({
                 source: new VectorSource({
-                    url: 'http://localhost:8080/geoserver/main/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=main:Kvartal_WGS84N35&CRS=EPSG%3A32635&maxFeatures=1000&outputFormat=application%2Fjson',
+                    url: 'http://192.168.100.4:8080/geoserver/main/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=main:Kvartal_WGS84N35&CRS=EPSG%3A32635&maxFeatures=1000&outputFormat=application%2Fjson',
                     format: new GeoJSON(),
                     projection: map.getView().getProjection(),
                 })
@@ -75,36 +75,37 @@
                     }
                 });
 
-                var selectElement = document.getElementById('type');
+                // var selectElement = document.getElementById('type');
 
-                var changeInteraction = function() {
-                    if (select !== null) {
-                        map.removeInteraction(select);
-                    }
-                    var value = selectElement.value;
-                    if (value == 'singleclick') {
+                // var changeInteraction = function() {
+                //     if (select !== null) {
+                //         map.removeInteraction(select);
+                    // }
+                    // var value = selectElement.value;
+                    // if (value == 'singleclick') {
                         select = selectSingleClick;
-                    } else if (value == 'click') {
-                        select = selectClick;
-                    } else if (value == 'pointermove') {
-                        select = selectPointerMove;
-                    } else if (value == 'altclick') {
-                        select = selectAltClick;
-                    } else {
-                        select = null;
-                    }
-                    if (select !== null) {
+                    // } else if (value == 'click') {
+                    //     select = selectClick;
+                    // } else if (value == 'pointermove') {
+                    //     select = selectPointerMove;
+                    // } else if (value == 'altclick') {
+                    //     select = selectAltClick;
+                    // } else {
+                    //     select = null;
+                    // }
+                    // if (select !== null) {
                         map.addInteraction(select);
                         select.on('select', function(e) {
-                            document.getElementById('status').innerHTML = '&nbsp;' +
-                                e.target.getFeatures().getLength() +
-                                ' selected features (last operation selected ' + e.selected.length +
-                                ' and deselected ' + e.deselected.length + ' features)';
+                          console.log(e)
+                            // document.getElementById('status').innerHTML = '&nbsp;' +
+                            //     e.target.getFeatures().getLength() +
+                            //     ' selected features (last operation selected ' + e.selected.length +
+                            //     ' and deselected ' + e.deselected.length + ' features)';
                         });
-                    }
-                };
-                selectElement.onchange = changeInteraction;
-                changeInteraction();
+                    // }
+                // };
+                // selectElement.onchange = changeInteraction;
+                // changeInteraction();
 
         }
     }
