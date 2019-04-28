@@ -65,19 +65,19 @@
   import WMSGetFeatureInfo from 'ol/format/WMSGetFeatureInfo';
   import axios from 'axios';
 
-  let tetLayer = new TileLayer({
-        source: new TileWMS(
-          ({
-            url: 'http://192.168.43.243:8080/geoserver/main/wms',
-            // url: 'http://localhost:8080/geoserver/main/wms',
-            params: {
-              'LAYERS': 'main:Gidrografija_WGS84N35',
-              'TILED': true,
-            },
-            title: 'SPA'
-          })
-        ),
-      });
+  // let tetLayer = new TileLayer({
+  //       source: new TileWMS(
+  //         ({
+  //           url: 'http://172.16.193.174:4201/geoserver/main/wms',
+  //           // url: 'http://localhost:8080/geoserver/main/wms',
+  //           params: {
+  //             'LAYERS': 'main:Gidrografija_WGS84N35',
+  //             'TILED': true,
+  //           },
+  //           title: 'SPA'
+  //         })
+  //       ),
+  //     });
 
   let scaleLineControl = new ScaleLine();
   scaleLineControl.setUnits('metric');
@@ -117,7 +117,7 @@
         layersIds: [],
         layers: [],
         layerNames: [],
-        url: 'http://192.168.100.4:8080'
+        url: 'http://172.16.193.174:4201'
       }
     },
     date: {
@@ -158,22 +158,36 @@
             const data = response.data;
             data.layers.layer.forEach(layer => {
               this.layerNames.push(layer.name);
-              this.layers.push(
-                new TileLayer({
-                  source: new TileWMS(
-                    ({
-                      // url: 'http://192.168.43.243:8080/geoserver/main/wms',
-                      url: `${this.url}/geoserver/main/wms`,
-                      params: {
-                        'LAYERS': layer.name,
-                        'TILED': true,
-                        'STYLES': 'LCH'
-                      },
-                      title: 'SPA'
-                    })
-                  ),
-                }),
-              );
+              console.log(layer.name)
+              // if(layer.name.indexOf('kvartal') + 1) {
+              //   console.log('vector')
+              //   this.layers.push(
+              //     new VectorLayer({
+              //       source: new VectorSource({
+              //         format: new GeoJSON(),
+              //         url: 'http://172.16.193.174:4201/geoserver/cite/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=cite%3Akvartal_wgs84n35&srsName=EPSG:3857&maxFeatures=500&outputFormat=application%2Fjson',
+              //         // url: 'http://localhost:8080/geoserver/main/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=main:Kvartal_WGS84N35&srsName=EPSG:3857&maxFeatures=1000&outputFormat=application%2Fjson',
+              //       })
+              //     })
+              //   );
+              // } else {
+                this.layers.push(
+                  new TileLayer({
+                    source: new TileWMS(
+                      ({
+                        // url: 'http://192.168.43.243:8080/geoserver/main/wms',
+                        url: `${this.url}/geoserver/cite/wms`,
+                        params: {
+                          'LAYERS': layer.name,
+                          'TILED': true,
+                          'STYLES': 'LCH'
+                        },
+                        title: 'SPA'
+                      })
+                    ),
+                  }),
+                );
+              // }
             });
           });
         // this.layers.push(
@@ -195,7 +209,7 @@
         //   new VectorLayer({
         //     source: new VectorSource({
         //       format: new GeoJSON(),
-        //       url: 'http://192.168.43.243:8080/geoserver/main/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=main:Vydel_WGS84N35&srsName=EPSG:3857&maxFeatures=1000&outputFormat=application%2Fjson',
+        //       url: 'http://172.16.193.174:4201/geoserver/cite/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=cite%3Akvartal_wgs84n35&srsName=EPSG:3857&maxFeatures=500&outputFormat=application%2Fjson',
         //       // url: 'http://localhost:8080/geoserver/main/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=main:Kvartal_WGS84N35&srsName=EPSG:3857&maxFeatures=1000&outputFormat=application%2Fjson',
         //     })
         //   }),
@@ -296,14 +310,17 @@
         });
       },
       addDrawInteraction: function () {
-        console.log(this.layers[0].getSource().updateParams({
-          'STYLES': ''
-        }));
+        this.layers[0].getSource().updateParams({
+          'STYLES': 'grass'
+        });
         console.log(this.layers[0].getSource().getParams());
         this.map.addInteraction(this.draw);
         // this.map.addInteraction(this.snap);
       },
       removeDrawInteraction: function () {
+        this.layers[0].getSource().updateParams({
+          'STYLES': 'LCH'
+        });
         this.map.removeInteraction(this.draw);
         // this.map.removeInteraction(this.snap);
       },
