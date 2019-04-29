@@ -7,15 +7,57 @@ import (
 	"github.com/go-chi/render"
 	"net/http"
 )
+var connStr = "user=postgres password=Alexei98 dbname=postgres sslmode=disable"
+
 type Test struct {
 	Login string `json:"login"`
 	Password string `json:"password"`
+}
+type user struct{
+	id int
+	FirstName string
+	LastName string
+	email string
+	Type int
 }
 
 func (p *Test) Bind(r *http.Request) error {
 	// At this point, Decode is already done by `chi`
 	p.Login = p.Login + " after decode"
 	return nil
+}
+
+func getUser(w http.ResponseWriter, r *http.Request) {
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+	users := []user{}
+	oneUser := user{}
+	row := db.QueryRow("select * from Products where id = $1", 2)
+	err = row.Scan(&oneUser.id, &oneUser.FirstName, &oneUser.LastName, &oneUser.email, &oneUser.Type)
+	if err != nil{
+		panic(err)
+	}
+	fmt.Println(&oneUser.id, &oneUser.FirstName, &oneUser.LastName, &oneUser.email, &oneUser.Type)
+	rows, err := db.Query("select * from Users")
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+	for rows.Next(){
+		p := user{}
+		err := rows.Scan(&p.id, &p.FirstName, &p.LastName, &p.email, &p.Type)
+		if err != nil{
+			fmt.Println(err)
+			continue
+		}
+		users = append(users, p)
+	}
+	for _, p := range users{
+		fmt.Println(p.id, p.FirstName, p.LastName, p.email)
+	}
 }
 
 func autentificateUser(w http.ResponseWriter, r *http.Request) {
@@ -25,13 +67,13 @@ func autentificateUser(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 	fmt.Println(p.Login)
+
 	//name := chi.URLParam(r, "loh")
 	//name := r.Context().Value("user")
 	//fmt.Println(name)
 	fmt.Println("post have been sended!")
 }
 func addUser(w http.ResponseWriter, r *http.Request) {
-	connStr := "user=postgres password=Alexei98 dbname=postgres sslmode=disable"
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		panic(err)
@@ -59,6 +101,7 @@ func NewRouter() http.Handler {
 	// Register the API routes
 	r.Post("/", autentificateUser)
 	r.Post("/add", addUser)
+	r.Get("/get", getUser)
 
 	return r
 }
