@@ -1,0 +1,92 @@
+<div>
+  <md-speed-dial class="actions" md-direction="bottom">
+    <md-speed-dial-target class="md-primary">
+      <!--        <md-icon>my_location</md-icon>-->
+      <md-icon class="md-morph-initial">layers</md-icon>
+      <md-icon class="md-morph-final">close</md-icon>
+    </md-speed-dial-target>
+
+    <md-speed-dial-content>
+      <md-button class="md-icon-button" v-on:click="changePointer">
+        <md-icon v-show="pointsAdding">games</md-icon>
+        <md-icon v-show="!pointsAdding">control_point</md-icon>
+      </md-button>
+      <md-button class="md-icon-button" @click="showDialog = true">
+        <md-icon>filter_list</md-icon>
+      </md-button>
+    </md-speed-dial-content>
+  </md-speed-dial>
+  <div id="fullscreen" class="fullscreen">
+    <div id="map" class="map"></div>
+  </div>
+  <md-dialog :md-active.sync="showDialog">
+    <md-dialog-title>Фильтр</md-dialog-title>
+    <md-dialog-content>
+      <md-tabs md-dynamic-height>
+        <md-tab md-label="Слои">
+          <md-field>
+            <label for="movies">Выберите слой</label>
+            <md-select v-model="layersIds" name="movies" id="movies" multiple>
+              <md-option v-for="(name, index) in layerNames" v-bind:value="index">{{name}}</md-option>
+            </md-select>
+          </md-field>
+        </md-tab>
+        <md-tab md-label="Справка">
+          <md-table v-model="searched" md-sort="name" md-sort-order="asc" md-card md-fixed-header @md-selected="onSelect">
+            <md-table-toolbar>
+              <div class="md-toolbar-section-start">
+                <h1 class="md-title">Users</h1>
+              </div>
+
+              <md-field md-clearable class="md-toolbar-section-end">
+                <md-input placeholder="Search by name..." v-model="search" @input="searchOnTable" />
+              </md-field>
+            </md-table-toolbar>
+
+            <md-table-empty-state
+              md-label="No users found"
+              :md-description="`No user found for this '${search}' query. Try a different search term or create a new user.`">
+              <md-button class="md-primary md-raised" @click="newUser">Create New User</md-button>
+            </md-table-empty-state>
+
+            <md-table-row slot="md-table-row" slot-scope="{ item }" md-selectable="multiple" md-auto-select>
+              <md-table-cell md-label="ID" md-sort-by="id" md-numeric>{{ item.id }}</md-table-cell>
+              <md-table-cell md-label="Name" md-sort-by="name">{{ item.name }}</md-table-cell>
+              <md-table-cell md-label="Email" md-sort-by="email">{{ item.email }}</md-table-cell>
+              <md-table-cell md-label="Gender" md-sort-by="gender">{{ item.gender }}</md-table-cell>
+              <md-table-cell md-label="Job Title" md-sort-by="title">{{ item.title }}</md-table-cell>
+            </md-table-row>
+          </md-table>
+        </md-tab>
+        <md-tab md-label="Дополнительно">
+        </md-tab>
+      </md-tabs>
+
+    </md-dialog-content>
+    <md-dialog-actions>
+      <md-button class="md-primary" @click="showDialog = false">Отмена</md-button>
+      <md-button class="md-primary" @click="filter">Применить</md-button>
+    </md-dialog-actions>
+  </md-dialog>
+  <div id="popup" title="Welcome to OpenLayers"></div>
+  <md-snackbar md-persistent :md-active.sync="noConn" :md-duration="Infinity">
+    <span>Соединение с геосервером не установлено!</span>
+    <md-button class="md-primary" @click="retry">Повторить</md-button>
+  </md-snackbar>
+  <div v-show="loading">
+    <md-card>
+      <md-card-header>
+        <div class="md-title">Идёт загрузка</div>
+      </md-card-header>
+
+      <md-card-content>
+        <md-progress-spinner :md-diameter="100" :md-stroke="10" md-mode="indeterminate">_</md-progress-spinner>
+      </md-card-content>
+
+      <!--<md-card-actions>-->
+      <!--<md-button>Action</md-button>-->
+      <!--<md-button>Action</md-button>-->
+      <!--</md-card-actions>-->
+    </md-card>
+  </div>
+</div>
