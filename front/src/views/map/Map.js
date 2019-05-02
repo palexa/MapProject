@@ -25,21 +25,8 @@ import Overlay from 'ol/Overlay';
 import {toStringHDMS} from 'ol/coordinate.js';
 import {fromLonLat, toLonLat} from 'ol/proj.js';
 import WMSGetFeatureInfo from 'ol/format/WMSGetFeatureInfo';
+import OSM from 'ol/source/OSM'
 import axios from 'axios';
-
-// let tetLayer = new TileLayer({
-//       source: new TileWMS(
-//         ({
-//           url: 'http://172.16.193.174:4201/geoserver/main/wms',
-//           // url: 'http://localhost:8080/geoserver/main/wms',
-//           params: {
-//             'LAYERS': 'main:Gidrografija_WGS84N35',
-//             'TILED': true,
-//           },
-//           title: 'SPA'
-//         })
-//       ),
-//     });
 
 let scaleLineControl = new ScaleLine();
 scaleLineControl.setUnits('metric');
@@ -68,7 +55,14 @@ let vector = new VectorLayer({
     })
   })
 });
-
+let aero = new TileLayer({
+  source: new XYZ({
+    url: `https://{1-4}.aerial.maps.cit.api.here.com/maptile/2.1/maptile/newest/satellite.day/{z}/{x}/{y}/256/png?app_id=bC3EwJd5PpBZQksByia9&app_code=ZgXJboW6NT-PllF8etor9g`
+  })
+});
+let osm = new TileLayer({
+  source: new OSM()
+});
 
 export default {
   name: 'map',
@@ -134,6 +128,26 @@ export default {
     msg: String,
   },
   mounted: function () {
+    var swipe = document.getElementById('myRange');
+
+    aero.on('precompose', function(event) {
+      var ctx = event.context;
+      var width = ctx.canvas.width * (swipe.value / 100);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(width, 0, ctx.canvas.width - width, ctx.canvas.height);
+      ctx.clip();
+    });
+
+    aero.on('postcompose', function(event) {
+      var ctx = event.context;
+      ctx.restore();
+    });
+
+    swipe.addEventListener('input', () => {
+      this.map.render();
+    }, false);
     this.initLayers();
     this.createMap();
     this.map.addInteraction(modify);
@@ -219,94 +233,6 @@ export default {
           this.noConn = true;
         }
       )
-      // this.layers.push(
-      //   new TileLayer({
-      //     source: new TileWMS(
-      //       ({
-      //         url: 'http://192.168.43.243:8080/geoserver/main/wms',
-      //         // url: 'http://localhost:8080/geoserver/main/wms',
-      //         params: {
-      //           'LAYERS': 'main:Vydel_WGS84N35',
-      //           'TILED': true,
-      //         },
-      //         title: 'SPA'
-      //       })
-      //     ),
-      //   }),
-      // );
-      // this.layers.push(
-      //   new VectorLayer({
-      //     source: new VectorSource({
-      //       format: new GeoJSON(),
-      //       url: 'http://172.16.193.174:4201/geoserver/cite/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=cite%3Akvartal_wgs84n35&srsName=EPSG:3857&maxFeatures=500&outputFormat=application%2Fjson',
-      //       // url: 'http://localhost:8080/geoserver/main/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=main:Kvartal_WGS84N35&srsName=EPSG:3857&maxFeatures=1000&outputFormat=application%2Fjson',
-      //     })
-      //   }),
-      // );
-      // this.layers.push(
-      //   new VectorLayer({
-      //     source: new VectorSource({
-      //       format: new GeoJSON(),
-      //       url: 'http://192.168.43.243:8080/geoserver/main/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=main:Kvartal_WGS84N35&srsName=EPSG:3857&maxFeatures=1000&outputFormat=application%2Fjson',
-      //       // url: 'http://localhost:8080/geoserver/main/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=main:Kvartal_WGS84N35&srsName=EPSG:3857&maxFeatures=1000&outputFormat=application%2Fjson',
-      //     })
-      //   }),
-      // );
-      // this.layers.push(
-      //   new TileLayer({
-      //     source: new TileWMS(
-      //       ({
-      //         url: 'http://192.168.43.243:8080/geoserver/main/wms',
-      //         // url: 'http://localhost:8080/geoserver/main/wms',
-      //         params: {
-      //           'LAYERS': 'main:Kvartal_WGS84N35',
-      //           'TILED': true,
-      //         },
-      //         title: 'SPA'
-      //       })
-      //     ),
-      //   })
-      // );
-      // this.layers.push(
-      //   new VectorLayer({
-      //     source: new VectorSource({
-      //       format: new GeoJSON(),
-      //       url: 'http://192.168.43.243:8080/geoserver/main/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=main:Stacionary_43&srsName=EPSG:3857&maxFeatures=1000&outputFormat=application%2Fjson',
-      //       // url: 'http://localhost:8080/geoserver/main/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=main:Stacionary_43&srsName=EPSG:3857&maxFeatures=1000&outputFormat=application%2Fjson',
-      //     })
-      //   }),
-      // );
-      //
-      // this.layers.push(
-      //   new TileLayer({
-      //     source: new TileWMS(
-      //       ({
-      //         url: 'http://192.168.43.243:8080/geoserver/main/wms',
-      //         // url: 'http://localhost:8080/geoserver/main/wms',
-      //         params: {
-      //           'LAYERS': 'main:Gidrografija_WGS84N35',
-      //           'TILED': true,
-      //         },
-      //         title: 'SPA'
-      //       })
-      //     ),
-      //   }),
-      // );
-      // this.layers.push(
-      //   new TileLayer({
-      //     source: new TileWMS(
-      //       ({
-      //         url: 'http://192.168.43.243:8080/geoserver/main/wms',
-      //         // url: 'http://localhost:8080/geoserver/main/wms',
-      //         params: {
-      //           'LAYERS': 'main:Line_WGS84N35',
-      //           'TILED': true,
-      //         },
-      //         title: 'SPA'
-      //       })
-      //     ),
-      //   }),
-      // );
     },
     createMap: function () {
       this.map = new Map({
@@ -316,11 +242,8 @@ export default {
         ]),
         target: 'map',
         layers: [
-          new TileLayer({
-            source: new XYZ({
-              url: `https://{1-4}.aerial.maps.cit.api.here.com/maptile/2.1/maptile/newest/satellite.day/{z}/{x}/{y}/256/png?app_id=bC3EwJd5PpBZQksByia9&app_code=ZgXJboW6NT-PllF8etor9g`
-            })
-          }),
+          osm,
+          aero,
           vector
         ],
         view: new View({

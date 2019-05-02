@@ -5,6 +5,10 @@ import {
   minLength,
   maxLength,
 } from 'vuelidate/lib/validators'
+import axios from 'axios';
+import TileLayer from "ol/layer/Tile";
+import TileWMS from "ol/source/TileWMS";
+
 export default {
   name: "registration",
   mixins: [validationMixin],
@@ -69,6 +73,12 @@ export default {
     },
     saveUser () {
       this.sending = true;
+      const user = {...this.form};
+      axios
+        .post(`http://localhost:8088/user/add`,user)
+        .then(res => {
+        }).catch(() => {
+        });
 
       // Instead of this timeout, here you can call your API
       window.setTimeout(() => {

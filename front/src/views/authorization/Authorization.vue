@@ -2,4 +2,4 @@
 
 <script src="./Authorization.js"></script>
 
-<style src="./Authorization.css"></style>
+<style src="./Authorization.css" scoped></style>
