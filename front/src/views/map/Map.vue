@@ -2,4 +2,4 @@
 
 <script src="./Map.js"></script>
 
-<style src="./Map.css" scoped></style>
+<style src="./Map.css"></style>
