@@ -113,6 +113,7 @@ export default {
       layersIds: [],
       layers: [],
       layerNames: [],
+      layerStyles: [],
       url: 'http://172.16.193.174:4201',
       noConn: false,
       loading: false
@@ -141,7 +142,7 @@ export default {
     });
 
     aero.on('postcompose', function(event) {
-      var ctx = event.context;
+      const ctx = event.context;
       ctx.restore();
     });
 
@@ -182,6 +183,14 @@ export default {
     retry: function () {
       this.initLayers()
     },
+    getStylesForLayer: function (layerName) {
+      axios.get(`${this.url}/geoserver/rest/layers/${layerName}.json`)
+        .then(res => {
+          console.log(res.data.layer.styles);
+          // this.layerStyles.push({name: layerName, data: {...}});
+        })
+        .catch(() => {})
+    },
     initLayers: function () {
       this.layerNames = [];
       this.layers = [];
@@ -193,7 +202,8 @@ export default {
           const data = response.data;
           data.layers.layer.forEach(layer => {
             this.layerNames.push(layer.name);
-            console.log(layer.name)
+            // console.log(layer.name);
+            this.getStylesForLayer(layer.name)
             // if(layer.name.indexOf('kvartal') + 1) {
             //   console.log('vector')
             //   this.layers.push(
@@ -206,6 +216,12 @@ export default {
             //     })
             //   );
             // } else {
+            let style = '';
+            if(layer.name.indexOf('vydel') + 1) {
+              style = 'examplemy';
+            } else {
+              style = 'New';
+            }
             this.layers.push(
               new TileLayer({
                 source: new TileWMS(
@@ -215,14 +231,13 @@ export default {
                     params: {
                       'LAYERS': layer.name,
                       'TILED': true,
-                      'STYLES': 'LCH'
+                      'STYLES': style
                     },
                     title: 'SPA'
                   })
                 ),
               }),
             );
-            console.log(this.layers)
             // this.searched = this.layers
             // }
           });
@@ -274,7 +289,7 @@ export default {
     removeDrawInteraction: function () {
       if (this.layers.length) {
         this.layers[0].getSource().updateParams({
-          'STYLES': 'LCH'
+          'STYLES': 'New'
         });
       }
       this.map.removeInteraction(this.draw);
