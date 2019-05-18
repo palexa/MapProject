@@ -10,7 +10,13 @@ import (
 	"github.com/go-chi/chi"
 	_ "github.com/lib/pq"
 )
-
+const (
+	host     = "nuolh.belstu.by"
+	port     = 5432
+	user     = "postgres"
+	password = "Alexei98"
+	dbname   = "postgres"
+)
 // ValidBearer is a hardcoded bearer token for demonstration purposes.
 const ValidBearer = "123456"
 
@@ -19,8 +25,11 @@ type HelloResponse struct {
 	Message string `json:"message"`
 }
 func addToDb() {
-	connStr := "user=postgres password=Alexei98 dbname=postgres sslmode=disable"
-	db, err := sql.Open("postgres", connStr)
+	//connStr := "user=postgres password=Alexei98 dbname=postgres sslmode=disable"
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
+		"password=%s dbname=%s sslmode=disable",
+		host, port, user, password, dbname)
+	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		panic(err)
 	}

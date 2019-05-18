@@ -15,10 +15,10 @@ import TileLayer from 'ol/layer/Tile';
 import VectorLayer from 'ol/layer/Vector';
 import XYZ from 'ol/source/XYZ';
 import GeoJSON from 'ol/format/GeoJSON';
-import VectorSource from 'ol/source/Vector.js';
+import VectorSource from 'ol/source/Vector';
 import Select from 'ol/interaction/Select';
 import TileWMS from 'ol/source/TileWMS'
-import {Circle as CircleStyle, Fill, Stroke, Style} from 'ol/style';
+import {Circle as CircleStyle, Fill, Stroke, Style, Icon} from 'ol/style';
 import {Draw, Modify, Snap} from 'ol/interaction';
 import {defaults as defaultControls, ScaleLine, FullScreen, OverviewMap} from 'ol/control';
 import Overlay from 'ol/Overlay';
@@ -30,7 +30,6 @@ import axios from 'axios';
 
 let scaleLineControl = new ScaleLine();
 scaleLineControl.setUnits('metric');
-let fullScreenControl = new FullScreen({});
 
 
 const singleClick = new Select();
@@ -39,21 +38,6 @@ let modify = new Modify({source: source});
 
 let vector = new VectorLayer({
   source: source,
-  style: new Style({
-    fill: new Fill({
-      color: 'rgba(255, 255, 255, 0.2)'
-    }),
-    stroke: new Stroke({
-      color: '#ffcc33',
-      width: 2
-    }),
-    image: new CircleStyle({
-      radius: 7,
-      fill: new Fill({
-        color: '#ffcc33'
-      })
-    })
-  })
 });
 let aero = new TileLayer({
   source: new XYZ({
@@ -66,8 +50,12 @@ let osm = new TileLayer({
 
 export default {
   name: 'map',
-  data: function () {
-    return {
+  data: () => ({
+    array: [],
+      changingLayerId: null,
+      selectedLayer: {styles:[]},
+      selectedIds:[],
+      selectedStyles: [],
       selected: [],
       search: null,
       searched: [],
@@ -114,11 +102,11 @@ export default {
       layers: [],
       layerNames: [],
       layerStyles: [],
-      url: 'http://172.16.193.174:4201',
+      url: 'http://nuolh.belstu.by:4201',
       noConn: false,
       loading: false
     }
-  },
+  ),
   date: {
     map: null,
     // layers: null,
@@ -167,27 +155,84 @@ export default {
     // });
 
   },
-  created: function () {
-    this.searched = this.users
-  },
   methods: {
     onSelect (items) {
       this.selected = items
     },
-    newUser () {
-      window.alert('Noop')
-    },
-    searchOnTable () {
-      this.searched = searchByName(this.users, this.search)
-    },
     retry: function () {
       this.initLayers()
     },
+    addLayer: function (name) {
+      if(name.indexOf('cite:ppp') + 1) {
+        this.layers.push(
+          new VectorLayer({
+            source: new VectorSource({
+              format: new GeoJSON(),
+              url: 'http://nuolh.belstu.by:4201/geoserver/cite/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=cite%3Appp&srsName=EPSG:3857&maxFeatures=500&outputFormat=application%2Fjson',
+              style: new Style({
+                fill: new Fill({
+                  color: [203, 194, 185, 1]
+                }),
+                stroke: new Stroke({
+                  color: [177, 163, 148, 0.5],
+                  width: 2,
+                  lineCap: 'round'
+                })
+              })
+            })
+          })
+        );
+      }
+      else if(name.indexOf('br1') + 1) {
+        this.layers.push(
+          // new VectorLayer({
+          //   source: new KML({
+          //     projection: 'EPSG:3857',
+          //     url: 'http://nuolh.belstu.by:4201/geoserver/cite/wms?service=WMS&version=1.1.0&request=GetMap&layers=cite%3Abr1&bbox=503633.3125%2C5933474.5%2C504080.96875%2C5936215.5&width=330&height=768&srs=EPSG%3A32635&format=kml',
+          //     extractStyles: false
+          //   }),
+          //   style: dotsStyle
+          // })
+        new VectorLayer({
+            source: new VectorSource({
+              format: new GeoJSON(),
+              url: 'http://nuolh.belstu.by:4201/geoserver/cite/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=cite%3Abr1&srsName=EPSG:3857&outputFormat=application%2Fjson',
+            })
+        })
+        );
+      }
+      else {
+        this.layers.push(
+          new TileLayer({
+            source: new TileWMS(
+              ({
+                url: `${this.url}/geoserver/cite/wms`,
+                params: {
+                  'LAYERS': name,
+                  'TILED': true,
+                  'STYLES': ''
+                },
+                title: 'SPA'
+              })
+            ),
+          }),
+        );
+      }
+    },
     getStylesForLayer: function (layerName) {
+      let styles = [];
       axios.get(`${this.url}/geoserver/rest/layers/${layerName}.json`)
         .then(res => {
-          console.log(res.data.layer.styles);
-          // this.layerStyles.push({name: layerName, data: {...}});
+          this.addLayer(layerName);
+          this.layerNames.push(layerName);
+          styles.push(res.data.layer.defaultStyle.name);
+          if (res.data.layer.styles) {
+            res.data.layer.styles.style.forEach(style => {
+              styles.push(style.name);
+            })
+          }
+          this.selectedStyles.push({name: res.data.layer.defaultStyle.name});
+          this.layerStyles.push({id:this.layerStyles.length ,name: layerName, styles: [...styles], selectedStyle: res.data.layer.defaultStyle.name});
         })
         .catch(() => {})
     },
@@ -201,8 +246,6 @@ export default {
         .then(response => {
           const data = response.data;
           data.layers.layer.forEach(layer => {
-            this.layerNames.push(layer.name);
-            // console.log(layer.name);
             this.getStylesForLayer(layer.name)
             // if(layer.name.indexOf('kvartal') + 1) {
             //   console.log('vector')
@@ -216,28 +259,7 @@ export default {
             //     })
             //   );
             // } else {
-            let style = '';
-            if(layer.name.indexOf('vydel') + 1) {
-              style = 'examplemy';
-            } else {
-              style = 'New';
-            }
-            this.layers.push(
-              new TileLayer({
-                source: new TileWMS(
-                  ({
-                    // url: 'http://192.168.43.243:8080/geoserver/main/wms',
-                    url: `${this.url}/geoserver/cite/wms`,
-                    params: {
-                      'LAYERS': layer.name,
-                      'TILED': true,
-                      'STYLES': style
-                    },
-                    title: 'SPA'
-                  })
-                ),
-              }),
-            );
+
             // this.searched = this.layers
             // }
           });
@@ -248,6 +270,21 @@ export default {
           this.noConn = true;
         }
       )
+      console.log(this.layerNames)
+    },
+    selectStyle: function (layerId) {
+      console.log(layerId)
+      this.changingLayerId = layerId;
+      this.selectedLayer = this.layerStyles[layerId];
+      this.showDialog=true;
+    },
+    changeStyle: function () {
+      if(this.layers[this.changingLayerId].getSource().updateParams) {
+        this.layers[this.changingLayerId].getSource().updateParams({
+          'STYLES': this.layerStyles[this.changingLayerId].selectedStyle
+        });
+      }
+      this.showDialog = false;
     },
     createMap: function () {
       this.map = new Map({
@@ -273,25 +310,20 @@ export default {
       this.map.addOverlay(popup);
       this.map.addInteraction(singleClick);
       singleClick.on('select', function (e) {
-        console.log(e)
+        console.log(e.selected[0].get('name'));
+        let id = e.selected[0].get('name');
+        axios.get(`http://localhost:3000/${id}`)
+          .then(res => {
+            console.log(res)
+            })
+          .catch(() => {})
       });
     },
     addDrawInteraction: function () {
-      if (this.layers.length) {
-        this.layers[0].getSource().updateParams({
-          'STYLES': 'grass'
-        });
-        console.log(this.layers[0].getSource().getParams());
-      }
       this.map.addInteraction(this.draw);
       // this.map.addInteraction(this.snap);
     },
     removeDrawInteraction: function () {
-      if (this.layers.length) {
-        this.layers[0].getSource().updateParams({
-          'STYLES': 'New'
-        });
-      }
       this.map.removeInteraction(this.draw);
       // this.map.removeInteraction(this.snap);
     },
@@ -302,8 +334,9 @@ export default {
       allIds.forEach(id => {
         this.map.removeLayer(this.layers[id])
       });
-      this.layersIds.forEach(id => {
+      this.selectedIds.forEach((id)=>{
         this.map.addLayer(this.layers[id]);
+        console.log(this.layers[id].getSource())
       });
       this.showDialog = false;
     },

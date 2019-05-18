@@ -7,6 +7,8 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"../api/v1"
+	"../api/user"
 )
 
 // HelloWorld is a sample handler
@@ -24,17 +26,13 @@ func NewRouter() http.Handler {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.DefaultCompress)
 	router.Use(middleware.Timeout(60 * time.Second))
-
-	// Set up our root handlers
-	//router.Get("/", HelloWorld)
-
-	// Set up our API
-	//router.Mount("/api/v1/", v1.NewRouter())
-	//router.Mount("/user", user.NewRouter())
+	//Set up our API
+	router.Mount("/api/v1/", v1.NewRouter())
+	router.Mount("/user", user.NewRouter())
 
 	// Set up static file serving
 	fs := http.FileServer(http.Dir("static"))
-	router.Handle("/example", fs)
+	router.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	return router
 }

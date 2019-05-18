@@ -7,7 +7,16 @@ import (
 	"github.com/go-chi/render"
 	"net/http"
 )
-var connStr = "user=postgres password=Alexei98 dbname=postgres sslmode=disable"
+const (
+	host     = "nuolh.belstu.by"
+	port     = 5432
+	username     = "postgres"
+	password = "Alexei98"
+	dbname   = "postgres"
+)
+var connStr = fmt.Sprintf("host=%s port=%d user=%s "+
+	"password=%s dbname=%s sslmode=disable",
+	host, port, username, password, dbname)
 
 type Test struct {
 	Login string `json:"login"`
@@ -35,7 +44,7 @@ func getUser(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 	users := []user{}
 	oneUser := user{}
-	row := db.QueryRow("select * from Products where id = $1", 2)
+	row := db.QueryRow("select * from Users where id = $1", 2)
 	err = row.Scan(&oneUser.id, &oneUser.FirstName, &oneUser.LastName, &oneUser.email, &oneUser.Type)
 	if err != nil{
 		panic(err)

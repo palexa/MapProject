@@ -1,116 +1,90 @@
 <template>
-    <div>
-        <div id="map"></div>
-    </div>
+  <div>
+    <md-table v-model="people" md-card @md-selected="onSelect">
+      <md-table-toolbar>
+        <h1 class="md-title">With auto select and alternate headers</h1>
+      </md-table-toolbar>
+
+      <md-table-toolbar slot="md-table-alternate-header" slot-scope="{ count }">
+        <div class="md-toolbar-section-start">{{ getAlternateLabel(count) }}</div>
+
+        <div class="md-toolbar-section-end">
+          <md-button class="md-icon-button">
+            <md-icon>delete</md-icon>
+          </md-button>
+        </div>
+      </md-table-toolbar>
+
+      <md-table-row slot="md-table-row" slot-scope="{ item }" :md-disabled="item.name.includes('Stave')" md-selectable="multiple">
+        <md-table-cell md-label="Name" md-sort-by="name">{{ item.name }}</md-table-cell>
+        <md-table-cell md-label="Email" md-sort-by="email">{{ item.email }}</md-table-cell>
+        <md-table-cell md-label="Gender" md-sort-by="gender">{{ item.gender }}</md-table-cell>
+        <md-table-cell md-label="Job Title" md-sort-by="title">{{ item.title }}</md-table-cell>
+      </md-table-row>
+    </md-table>
+
+    <p>Selected:</p>
+    {{ selected }}
+  </div>
 </template>
 
 <script>
-    import Map from 'ol/Map.js';
-    import View from 'ol/View.js';
-    import {click, pointerMove, altKeyOnly} from 'ol/events/condition.js';
-    import GeoJSON from 'ol/format/GeoJSON.js';
-    import Select from 'ol/interaction/Select.js';
-    import {Tile as TileLayer, Vector as VectorLayer} from 'ol/layer.js';
-    import OSM from 'ol/source/OSM.js';
-    import VectorSource from 'ol/source/Vector.js';
-
-    export default {
-        name: "example",
-        mounted() {
-
-                var raster = new TileLayer({
-                    source: new OSM()
-                });
-
-                var vector2 = new VectorLayer({
-                    source: new VectorSource({
-                        format: new GeoJSON(),
-                        url: 'http://192.168.100.4:8080/geoserver/main/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=main:Kvartal_WGS84N35&srsName=EPSG:3857&maxFeatures=1000&outputFormat=application%2Fjson',
-                    })
-                });
-
-
-                var map = new Map({
-                    layers: [
-                        raster,
-                        vector2
-                    ],
-                    target: 'map',
-                    view: new View({
-                        center: [3016281,7089075],
-                        zoom: 12
-                    })
-                });
-
-            var vector = new VectorLayer({
-                source: new VectorSource({
-                    url: 'http://192.168.100.4:8080/geoserver/main/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=main:Kvartal_WGS84N35&CRS=EPSG%3A32635&maxFeatures=1000&outputFormat=application%2Fjson',
-                    format: new GeoJSON(),
-                    projection: map.getView().getProjection(),
-                })
-            });
-
-            // map.addLayer(vectorLayer);
-            // map.addLayer(vector);
-
-
-            var select = null; // ref to currently selected interaction
-
-                // select interaction working on "singleclick"
-                var selectSingleClick = new Select();
-
-                // select interaction working on "click"
-                var selectClick = new Select({
-                    condition: click
-                });
-
-                // select interaction working on "pointermove"
-                var selectPointerMove = new Select({
-                    condition: pointerMove
-                });
-
-                var selectAltClick = new Select({
-                    condition: function(mapBrowserEvent) {
-                        return click(mapBrowserEvent) && altKeyOnly(mapBrowserEvent);
-                    }
-                });
-
-                // var selectElement = document.getElementById('type');
-
-                // var changeInteraction = function() {
-                //     if (select !== null) {
-                //         map.removeInteraction(select);
-                    // }
-                    // var value = selectElement.value;
-                    // if (value == 'singleclick') {
-                        select = selectSingleClick;
-                    // } else if (value == 'click') {
-                    //     select = selectClick;
-                    // } else if (value == 'pointermove') {
-                    //     select = selectPointerMove;
-                    // } else if (value == 'altclick') {
-                    //     select = selectAltClick;
-                    // } else {
-                    //     select = null;
-                    // }
-                    // if (select !== null) {
-                        map.addInteraction(select);
-                        select.on('select', function(e) {
-                          console.log(e)
-                            // document.getElementById('status').innerHTML = '&nbsp;' +
-                            //     e.target.getFeatures().getLength() +
-                            //     ' selected features (last operation selected ' + e.selected.length +
-                            //     ' and deselected ' + e.deselected.length + ' features)';
-                        });
-                    // }
-                // };
-                // selectElement.onchange = changeInteraction;
-                // changeInteraction();
-
+  export default {
+    name: 'TableMultiple',
+    data: () => ({
+      selected: [],
+      people: [
+        {
+          name: 'Shawna Dubbin',
+          email: 'sdubbin0@geocities.com',
+          gender: 'Male',
+          title: 'Assistant Media Planner'
+        },
+        {
+          name: 'Odette Demageard',
+          email: 'odemageard1@spotify.com',
+          gender: 'Female',
+          title: 'Account Coordinator'
+        },
+        {
+          name: 'Lonnie Izkovitz',
+          email: 'lizkovitz3@youtu.be',
+          gender: 'Female',
+          title: 'Operator'
+        },
+        {
+          name: 'Thatcher Stave',
+          email: 'tstave4@reference.com',
+          gender: 'Male',
+          title: 'Software Test Engineer III'
+        },
+        {
+          name: 'Clarinda Marieton',
+          email: 'cmarietonh@theatlantic.com',
+          gender: 'Female',
+          title: 'Paralegal'
         }
+      ]
+    }),
+    methods: {
+      onSelect (items) {
+        this.selected = items
+      },
+      getAlternateLabel (count) {
+        let plural = ''
+
+        if (count > 1) {
+          plural = 's'
+        }
+
+        return `${count} user${plural} selected`
+      }
     }
+  }
 </script>
 
-<style scoped>
-
+<style lang="scss" scoped>
+  .md-table + .md-table {
+    margin-top: 16px
+  }
 </style>
