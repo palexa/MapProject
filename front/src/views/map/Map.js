@@ -1,15 +1,3 @@
-
-const toLower = text => {
-  return text.toString().toLowerCase()
-};
-
-const searchByName = (items, term) => {
-  if (term) {
-    return items.filter(item => toLower(item.name).includes(toLower(term)))
-  }
-
-  return items
-};
 import {Map, View} from 'ol';
 import TileLayer from 'ol/layer/Tile';
 import VectorLayer from 'ol/layer/Vector';
