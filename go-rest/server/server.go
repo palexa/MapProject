@@ -3,14 +3,12 @@ package server
 import (
 	"fmt"
 	"net/http"
-	"path/filepath"
 	"time"
 
-	"../api/v1"
-	"../api/user"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"github.com/jordan-wright/unindexed"
+	"../api/v1"
+	"../api/user"
 )
 
 // HelloWorld is a sample handler
@@ -28,18 +26,13 @@ func NewRouter() http.Handler {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.DefaultCompress)
 	router.Use(middleware.Timeout(60 * time.Second))
-
-	// Set up our root handlers
-	router.Get("/", HelloWorld)
-
-	// Set up our API
+	//Set up our API
 	router.Mount("/api/v1/", v1.NewRouter())
 	router.Mount("/user", user.NewRouter())
 
 	// Set up static file serving
-	staticPath, _ := filepath.Abs("../../static/")
-	fs := http.FileServer(unindexed.Dir(staticPath))
-	router.Handle("/*", fs)
+	fs := http.FileServer(http.Dir("static"))
+	router.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	return router
 }

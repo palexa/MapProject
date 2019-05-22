@@ -26,7 +26,6 @@ func main() {
 	// Start the server
 	go func() {
 		srv.ListenAndServe()
-		//srv.Serve(autocert.NewListener(domains...))
 	}()
 
 	// Wait for an interrupt
