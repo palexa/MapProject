@@ -15,6 +15,7 @@ import {fromLonLat, toLonLat} from 'ol/proj.js';
 import WMSGetFeatureInfo from 'ol/format/WMSGetFeatureInfo';
 import OSM from 'ol/source/OSM'
 import axios from 'axios';
+var json = require('../../assets/json/styles.json');
 
 let scaleLineControl = new ScaleLine();
 scaleLineControl.setUnits('metric');
@@ -39,7 +40,9 @@ let osm = new TileLayer({
 export default {
   name: 'map',
   data: () => ({
+      styles: json,
     array: [],
+      picsArr: [],
       changingLayerId: null,
       selectedLayer: {styles:[]},
       selectedIds:[],
@@ -47,43 +50,6 @@ export default {
       selected: [],
       search: null,
       searched: [],
-      users: [
-        {
-          id: 1,
-          name: "Shawna Dubbin",
-          email: "sdubbin0@geocities.com",
-          gender: "Male",
-          title: "Assistant Media Planner"
-        },
-        {
-          id: 2,
-          name: "Odette Demageard",
-          email: "odemageard1@spotify.com",
-          gender: "Female",
-          title: "Account Coordinator"
-        },
-        {
-          id: 3,
-          name: "Vera Taleworth",
-          email: "vtaleworth2@google.ca",
-          gender: "Male",
-          title: "Community Outreach Specialist"
-        },
-        {
-          id: 4,
-          name: "Lonnie Izkovitz",
-          email: "lizkovitz3@youtu.be",
-          gender: "Female",
-          title: "Operator"
-        },
-        {
-          id: 5,
-          name: "Thatcher Stave",
-          email: "tstave4@reference.com",
-          gender: "Male",
-          title: "Software Test Engineer III"
-        }
-      ],
       pointsAdding: false,
       showDialog: false,
       layersIds: [],
@@ -92,7 +58,8 @@ export default {
       layerStyles: [],
       url: 'http://nuolh.belstu.by:4201',
       noConn: false,
-      loading: false
+      loading: false,
+      photosDialog: false
     }
   ),
   date: {
@@ -151,12 +118,13 @@ export default {
       this.initLayers()
     },
     addLayer: function (name) {
-      if(name.indexOf('cite:ppp') + 1) {
+      if(name.indexOf('v_') + 1) {
         this.layers.push(
           new VectorLayer({
             source: new VectorSource({
               format: new GeoJSON(),
-              url: 'http://nuolh.belstu.by:4201/geoserver/cite/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=cite%3Appp&srsName=EPSG:3857&maxFeatures=500&outputFormat=application%2Fjson',
+              url: `http://nuolh.belstu.by:4201/geoserver/cite/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${name}&srsName=EPSG:3857&outputFormat=application%2Fjson`,
+              params: {},
               style: new Style({
                 fill: new Fill({
                   color: [203, 194, 185, 1]
@@ -170,26 +138,7 @@ export default {
             })
           })
         );
-      }
-      else if(name.indexOf('br1') + 1) {
-        this.layers.push(
-          // new VectorLayer({
-          //   source: new KML({
-          //     projection: 'EPSG:3857',
-          //     url: 'http://nuolh.belstu.by:4201/geoserver/cite/wms?service=WMS&version=1.1.0&request=GetMap&layers=cite%3Abr1&bbox=503633.3125%2C5933474.5%2C504080.96875%2C5936215.5&width=330&height=768&srs=EPSG%3A32635&format=kml',
-          //     extractStyles: false
-          //   }),
-          //   style: dotsStyle
-          // })
-        new VectorLayer({
-            source: new VectorSource({
-              format: new GeoJSON(),
-              url: 'http://nuolh.belstu.by:4201/geoserver/cite/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=cite%3Abr1&srsName=EPSG:3857&outputFormat=application%2Fjson',
-            })
-        })
-        );
-      }
-      else {
+      } else {
         this.layers.push(
           new TileLayer({
             source: new TileWMS(
@@ -220,7 +169,8 @@ export default {
             })
           }
           this.selectedStyles.push({name: res.data.layer.defaultStyle.name});
-          this.layerStyles.push({id:this.layerStyles.length ,name: layerName, styles: [...styles], selectedStyle: res.data.layer.defaultStyle.name});
+          const haveStyles = (layerName.indexOf('v_') + 1)?false:true
+          this.layerStyles.push({id:this.layerStyles.length ,name: layerName.split('_')[1], styles: [...styles], selectedStyle: res.data.layer.defaultStyle.name,haveStyles: haveStyles});
         })
         .catch(() => {})
     },
@@ -297,13 +247,23 @@ export default {
       });
       this.map.addOverlay(popup);
       this.map.addInteraction(singleClick);
-      singleClick.on('select', function (e) {
+      singleClick.on('select',  (e) => {
         console.log(e.selected[0].get('name'));
-        let id = e.selected[0].get('name');
-        axios.get(`http://localhost:3000/${id}`)
+        let id = parseInt(e.selected[0].get('name'),10);
+        console.log(json)
+
+        axios.get(`http://nuolh.belstu.by:3000/static/${id}`)
           .then(res => {
-            console.log(res)
-            })
+            const dom = res.data;
+            const arr = dom.split('\n');
+            let arr2 = [];
+            for(let i =1;i<arr.length-2;i++) {
+              arr2.push(`http://nuolh.belstu.by:3000/static/${id}/` + arr[i].split('\"')[1]);
+            }
+            this.picsArr = arr2;
+            console.log('dialog!');
+            this.photosDialog = true;
+          })
           .catch(() => {})
       });
     },

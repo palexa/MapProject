@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import Router from 'vue-router';
 import Authorization from './views/authorization/Authorization.vue';
-
+import StartPage from './components/start-page'
 Vue.use(Router);
 
 export default new Router({
@@ -30,6 +30,11 @@ export default new Router({
       path: '/registration',
       name: 'registration',
       component: () => import(/* webpackChunkName: "about" */ './views/registration/registration.vue'),
+    },
+    {
+      path: '/',
+      name: 'start',
+      component: StartPage,
     },
   ],
 });

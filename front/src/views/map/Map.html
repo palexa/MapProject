@@ -15,12 +15,15 @@
             </md-button>
           </span>
           <span class="md-list-item-text">{{layer.name}}</span>
+            <md-list slot="md-expand">
+              <template  v-if="styles[layer.selectedStyle]&&layer.haveStyles">
+                <md-list-item v-for="(style, color) in styles[layer.selectedStyle].parameters">
+                  <span class="md-list-item-text">{{style.name}}</span>
+                  <md-icon v-bind:style="{ 'color': style.color }">format_color_fill</md-icon>
+                </md-list-item>
+              </template>
+            </md-list>
 
-          <md-list slot="md-expand">
-            <md-list-item class="md-inset">Сосна</md-list-item>
-            <md-list-item class="md-inset">Ель</md-list-item>
-            <md-list-item class="md-inset">Берёза</md-list-item>
-          </md-list>
         </md-list-item>
       </md-list>
     </md-app-drawer>
@@ -63,6 +66,18 @@
         <md-dialog-actions>
           <md-button class="md-primary" @click="showDialog = false">Отмена</md-button>
           <md-button class="md-primary" @click="changeStyle">Применить</md-button>
+        </md-dialog-actions>
+      </md-dialog>
+      <md-dialog :md-active.sync="photosDialog">
+        <md-dialog-title>Фотографии</md-dialog-title>
+        <md-dialog-content>
+          <md-list-item v-for="(pic) in picsArr">
+            <span class="md-list-item-text">{{pic}}</span>
+            <img :src="pic">
+          </md-list-item>
+        </md-dialog-content>
+        <md-dialog-actions>
+          <md-button class="md-primary" @click="photosDialog = false">Отмена</md-button>
         </md-dialog-actions>
       </md-dialog>
       <div id="popup" title="Welcome to OpenLayers"></div>
