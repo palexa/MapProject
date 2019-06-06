@@ -27,9 +27,10 @@
 }
 
 .md-drawer {
-  width: 230px;
+  /*width: 400px;*/
   max-width: calc(100vw - 125px);
 }
+
 
 .md-content {
   padding: 16px;

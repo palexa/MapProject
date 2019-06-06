@@ -16,6 +16,9 @@ import WMSGetFeatureInfo from 'ol/format/WMSGetFeatureInfo';
 import OSM from 'ol/source/OSM'
 import axios from 'axios';
 
+var json = require('../../assets/json/styles.json');
+import draggable from 'vuedraggable'
+
 let scaleLineControl = new ScaleLine();
 scaleLineControl.setUnits('metric');
 
@@ -37,53 +40,34 @@ let osm = new TileLayer({
 });
 
 export default {
+  components: {
+    draggable,
+  },
   name: 'map',
+  computed: {
+    myList: {
+      get() {
+        return this.layerStyles
+      },
+      set(value) {
+        this.upd(value)
+        this.layerStyles = value;
+      }
+    }
+  },
   data: () => ({
-    array: [],
+      menuVisible: false,
+      styles: json,
+      array: [],
+      orderIds: [],
+      picsArr: [],
       changingLayerId: null,
-      selectedLayer: {styles:[]},
-      selectedIds:[],
+      selectedLayer: {styles: []},
+      selectedIds: [],
       selectedStyles: [],
       selected: [],
       search: null,
       searched: [],
-      users: [
-        {
-          id: 1,
-          name: "Shawna Dubbin",
-          email: "sdubbin0@geocities.com",
-          gender: "Male",
-          title: "Assistant Media Planner"
-        },
-        {
-          id: 2,
-          name: "Odette Demageard",
-          email: "odemageard1@spotify.com",
-          gender: "Female",
-          title: "Account Coordinator"
-        },
-        {
-          id: 3,
-          name: "Vera Taleworth",
-          email: "vtaleworth2@google.ca",
-          gender: "Male",
-          title: "Community Outreach Specialist"
-        },
-        {
-          id: 4,
-          name: "Lonnie Izkovitz",
-          email: "lizkovitz3@youtu.be",
-          gender: "Female",
-          title: "Operator"
-        },
-        {
-          id: 5,
-          name: "Thatcher Stave",
-          email: "tstave4@reference.com",
-          gender: "Male",
-          title: "Software Test Engineer III"
-        }
-      ],
       pointsAdding: false,
       showDialog: false,
       layersIds: [],
@@ -92,12 +76,12 @@ export default {
       layerStyles: [],
       url: 'http://nuolh.belstu.by:4201',
       noConn: false,
-      loading: false
+      loading: false,
+      photosDialog: false
     }
   ),
   date: {
     map: null,
-    // layers: null,
     draw: null,
     snap: null,
   },
@@ -106,22 +90,18 @@ export default {
   },
   mounted: function () {
     var swipe = document.getElementById('myRange');
-
-    aero.on('precompose', function(event) {
+    aero.on('precompose', function (event) {
       var ctx = event.context;
       var width = ctx.canvas.width * (swipe.value / 100);
-
       ctx.save();
       ctx.beginPath();
       ctx.rect(width, 0, ctx.canvas.width - width, ctx.canvas.height);
       ctx.clip();
     });
-
-    aero.on('postcompose', function(event) {
+    aero.on('postcompose', function (event) {
       const ctx = event.context;
       ctx.restore();
     });
-
     swipe.addEventListener('input', () => {
       this.map.render();
     }, false);
@@ -134,62 +114,31 @@ export default {
     });
     this.snap = new Snap({source: source});
     this.map.removeInteraction(this.draw);
-    // this.map.on('click', function(evt) {
-    //   // var element = popup.getElement();
-    //   let coordinate = evt.coordinate;
-    //   let hdms = toStringHDMS(toLonLat(coordinate));
-    //   console.log(coordinate)
-    //   console.log(hdms)
-    // });
-
   },
   methods: {
-    onSelect (items) {
+    upd: function (values) {
+      this.orderIds = values.map(item => item.id);
+      this.layerStyles = [values];
+      this.filter();
+    },
+    onSelect(items) {
       this.selected = items
     },
     retry: function () {
       this.initLayers()
     },
     addLayer: function (name) {
-      if(name.indexOf('cite:ppp') + 1) {
+      if (name.indexOf('v_') + 1) {
         this.layers.push(
           new VectorLayer({
             source: new VectorSource({
               format: new GeoJSON(),
-              url: 'http://nuolh.belstu.by:4201/geoserver/cite/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=cite%3Appp&srsName=EPSG:3857&maxFeatures=500&outputFormat=application%2Fjson',
-              style: new Style({
-                fill: new Fill({
-                  color: [203, 194, 185, 1]
-                }),
-                stroke: new Stroke({
-                  color: [177, 163, 148, 0.5],
-                  width: 2,
-                  lineCap: 'round'
-                })
-              })
+              url: `http://nuolh.belstu.by:4201/geoserver/cite/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${name}&srsName=EPSG:3857&outputFormat=application%2Fjson`,
+              params: {},
             })
           })
         );
-      }
-      else if(name.indexOf('br1') + 1) {
-        this.layers.push(
-          // new VectorLayer({
-          //   source: new KML({
-          //     projection: 'EPSG:3857',
-          //     url: 'http://nuolh.belstu.by:4201/geoserver/cite/wms?service=WMS&version=1.1.0&request=GetMap&layers=cite%3Abr1&bbox=503633.3125%2C5933474.5%2C504080.96875%2C5936215.5&width=330&height=768&srs=EPSG%3A32635&format=kml',
-          //     extractStyles: false
-          //   }),
-          //   style: dotsStyle
-          // })
-        new VectorLayer({
-            source: new VectorSource({
-              format: new GeoJSON(),
-              url: 'http://nuolh.belstu.by:4201/geoserver/cite/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=cite%3Abr1&srsName=EPSG:3857&outputFormat=application%2Fjson',
-            })
-        })
-        );
-      }
-      else {
+      } else {
         this.layers.push(
           new TileLayer({
             source: new TileWMS(
@@ -220,9 +169,17 @@ export default {
             })
           }
           this.selectedStyles.push({name: res.data.layer.defaultStyle.name});
-          this.layerStyles.push({id:this.layerStyles.length ,name: layerName, styles: [...styles], selectedStyle: res.data.layer.defaultStyle.name});
+          const haveStyles = (layerName.indexOf('v_') + 1) ? false : true
+          this.layerStyles.push({
+            id: this.layerStyles.length,
+            name: layerName.split('_')[1],
+            styles: [...styles],
+            selectedStyle: res.data.layer.defaultStyle.name,
+            haveStyles: haveStyles
+          });
         })
-        .catch(() => {})
+        .catch(() => {
+        })
     },
     initLayers: function () {
       this.layerNames = [];
@@ -235,21 +192,6 @@ export default {
           const data = response.data;
           data.layers.layer.forEach(layer => {
             this.getStylesForLayer(layer.name)
-            // if(layer.name.indexOf('kvartal') + 1) {
-            //   console.log('vector')
-            //   this.layers.push(
-            //     new VectorLayer({
-            //       source: new VectorSource({
-            //         format: new GeoJSON(),
-            //         url: 'http://172.16.193.174:4201/geoserver/cite/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=cite%3Akvartal_wgs84n35&srsName=EPSG:3857&maxFeatures=500&outputFormat=application%2Fjson',
-            //         // url: 'http://localhost:8080/geoserver/main/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=main:Kvartal_WGS84N35&srsName=EPSG:3857&maxFeatures=1000&outputFormat=application%2Fjson',
-            //       })
-            //     })
-            //   );
-            // } else {
-
-            // this.searched = this.layers
-            // }
           });
           this.loading = false;
         }).catch(() => {
@@ -258,17 +200,15 @@ export default {
           this.noConn = true;
         }
       )
-      console.log(this.layerNames)
     },
     selectStyle: function (layerId) {
-      console.log(layerId)
       this.changingLayerId = layerId;
       this.selectedLayer = this.layerStyles[layerId];
-      this.showDialog=true;
+      this.showDialog = true;
     },
     changeStyle: function () {
-      if(this.layers[this.changingLayerId].getSource().updateParams) {
-        this.layers[this.changingLayerId].getSource().updateParams({
+      if (this.layers[this.layerStyles[this.changingLayerId].id].getSource().updateParams) {
+        this.layers[this.layerStyles[this.changingLayerId].id].getSource().updateParams({
           'STYLES': this.layerStyles[this.changingLayerId].selectedStyle
         });
       }
@@ -297,23 +237,31 @@ export default {
       });
       this.map.addOverlay(popup);
       this.map.addInteraction(singleClick);
-      singleClick.on('select', function (e) {
-        console.log(e.selected[0].get('name'));
-        let id = e.selected[0].get('name');
-        axios.get(`http://localhost:3000/${id}`)
+      singleClick.on('select', (e) => {
+        let id = parseInt(e.selected[0].get('name'), 10);
+        singleClick.getFeatures().clear();
+        axios.get(`http://nuolh.belstu.by:3000/static/${id}`)
           .then(res => {
-            console.log(res)
-            })
-          .catch(() => {})
+            const dom = res.data;
+            const arr = dom.split('\n');
+            let arr2 = [];
+            for (let i = 1; i < arr.length - 2; i++) {
+              arr2.push(`http://nuolh.belstu.by:3000/static/${id}/` + arr[i].split('\"')[1]);
+            }
+            this.picsArr = arr2;
+            this.map.removeInteraction(e)
+            console.log('dialog!');
+            this.photosDialog = true;
+          })
+          .catch(() => {
+          })
       });
     },
     addDrawInteraction: function () {
       this.map.addInteraction(this.draw);
-      // this.map.addInteraction(this.snap);
     },
     removeDrawInteraction: function () {
       this.map.removeInteraction(this.draw);
-      // this.map.removeInteraction(this.snap);
     },
     filter() {
       let allIds = this.layers.map(function (currentValue, index) {
@@ -322,19 +270,35 @@ export default {
       allIds.forEach(id => {
         this.map.removeLayer(this.layers[id])
       });
-      this.selectedIds.forEach((id)=>{
-        this.map.addLayer(this.layers[id]);
-        console.log(this.layers[id].getSource())
-      });
+      if (this.orderIds.length) {
+        this.orderIds.forEach(orderId => {
+          this.selectedIds.forEach((id) => {
+            if (orderId == id) {
+              this.map.addLayer(this.layers[id]);
+            }
+          });
+        })
+      } else {
+        allIds.forEach((_id) => {
+        this.selectedIds.forEach((id) => {
+          if (_id == id) {
+          this.map.addLayer(this.layers[id]);
+          }
+        });
+        });
+      }
+
       this.showDialog = false;
     },
     changePointer() {
-      if (this.pointsAdding) {
-        this.removeDrawInteraction();
-      } else {
-        this.addDrawInteraction();
-      }
-      this.pointsAdding = !this.pointsAdding;
+      this.map.getView().setCenter([3016281, 7089075]);
+      this.map.getView().setZoom(11);
+      // if (this.pointsAdding) {
+      //   this.removeDrawInteraction();
+      // } else {
+      //   this.addDrawInteraction();
+      // }
+      // this.pointsAdding = !this.pointsAdding;
     }
   }
 };
