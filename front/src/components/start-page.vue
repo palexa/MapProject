@@ -6,7 +6,7 @@
       </md-card-media>
 
       <md-card-header>
-        <div class="md-title">Негорельский опытно-учебый лесхоз</div>
+        <div class="md-title">НУОЛХ</div>
         <div class="md-subhead">Гео-система</div>
       </md-card-header>
 
