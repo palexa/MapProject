@@ -14,7 +14,7 @@ const (
 	host     = "nuolh.belstu.by"
 	port     = 5432
 	user     = "postgres"
-	password = "Alexei98"
+	password = "postgres"
 	dbname   = "postgres"
 )
 // ValidBearer is a hardcoded bearer token for demonstration purposes.
